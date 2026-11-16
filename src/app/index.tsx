@@ -82,6 +82,7 @@ export default function HomeScreen() {
   const previousFallStatus = useRef<boolean | null>(null);
 
   // Mengambil status pasien dari backend.
+
   const fetchStatus = async () => {
     try {
       const response = await fetch(`${API_URL}/api/status`);
@@ -94,14 +95,18 @@ export default function HomeScreen() {
 
       setApiStatus(data);
       setApiError('');
-    } catch {
-      setApiError('Backend tidak dapat dihubungi. Periksa koneksi Wi-Fi dan Flask.');
+    } catch (error) {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : 'Tidak dapat terhubung ke server.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Mengambil riwayat kejadian dari backend.
+
   const fetchHistory = async () => {
     setHistoryLoading(true);
 
@@ -109,7 +114,7 @@ export default function HomeScreen() {
       const response = await fetch(`${API_URL}/api/history`);
 
       if (!response.ok) {
-        throw new Error('Gagal mengambil riwayat.');
+        throw new Error('Gagal mengambil riwayat kejadian.');
       }
 
       const data: HistoryResponse = await response.json();
@@ -121,7 +126,7 @@ export default function HomeScreen() {
       setHistoryLoading(false);
     }
   };
-// Mengambil status sensor dari Flask.
+
   const fetchSensors = async () => {
     setSensorLoading(true);
     setSensorError('');
@@ -129,26 +134,26 @@ export default function HomeScreen() {
     try {
       const response = await fetch(`${API_URL}/api/sensors`);
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Gagal mengambil status sensor.');
+        throw new Error('Gagal mengambil status sensor.');
       }
+
+      const data = await response.json();
 
       setSensorData(data.sensors);
     } catch (error) {
       setSensorError(
         error instanceof Error
           ? error.message
-          : 'Gagal mengambil status sensor.'
+          : 'Tidak dapat mengambil data sensor.'
       );
     } finally {
       setSensorLoading(false);
     }
   };
-  // Mengubah status sensor melalui Flask.
+  
   const updateSensor = async (
-    sensor: keyof SensorData,
+    sensorName: keyof SensorData,
     status: string
   ) => {
     setSensorLoading(true);
@@ -160,30 +165,32 @@ export default function HomeScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ sensor, status }),
+        body: JSON.stringify({
+          sensor: sensorName,
+          status: status,
+        }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Gagal memperbarui sensor.');
+        throw new Error('Gagal memperbarui status sensor.');
       }
 
-      await fetchSensors();
-      await fetchStatus();
-      await fetchHistory();
+      await Promise.all([
+        fetchSensors(),
+        fetchStatus(),
+        fetchHistory(),
+      ]);
     } catch (error) {
       setSensorError(
         error instanceof Error
           ? error.message
-          : 'Gagal memperbarui status sensor.'
+          : 'Gagal mengirim perubahan sensor ke server.'
       );
     } finally {
       setSensorLoading(false);
     }
   };
 
-  // Menguji sensor melalui Flask.
   const testSensors = async () => {
     setSensorTestLoading(true);
     setSensorTestError('');
@@ -197,55 +204,64 @@ export default function HomeScreen() {
         body: JSON.stringify({}),
       });
 
-      const data: SensorTestResponse = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Pengujian sensor gagal.');
+        throw new Error('Gagal melakukan pengujian sensor.');
       }
+
+      const data: SensorTestResponse = await response.json();
 
       setSensorTestResults(data.results);
     } catch (error) {
       setSensorTestError(
         error instanceof Error
           ? error.message
-          : 'Gagal menguji sensor.'
+          : 'Tidak dapat menguji sensor melalui server.'
       );
     } finally {
       setSensorTestLoading(false);
     }
   };
-  // Memperbarui status jatuh pada backend.
-    const simulateFall = async (detected: boolean): Promise<boolean> => {
-      if (sending) return false;
 
-      setSending(true);
-      setApiError('');
+  const simulateFall = async (detected: boolean) => {
+    setSending(true);
 
-      try {
-        const response = await fetch(`${API_URL}/api/fall`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fall_detected: detected,
-          }),
-        });
+    try {
+      const response = await fetch(`${API_URL}/api/fall`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fall_detected: detected,
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error('Gagal memperbarui status jatuh.');
-        }
-
-        await Promise.all([fetchStatus(), fetchHistory()]);
-
-        return true;
-      } catch {
-        setApiError('Gagal mengirim perubahan ke backend.');
-        return false;
-      } finally {
-        setSending(false);
+      if (!response.ok) {
+        throw new Error('Gagal mengirim simulasi jatuh.');
       }
-    };
+
+      await Promise.all([
+        fetchStatus(),
+        fetchHistory(),
+      ]);
+
+      setAcknowledged(false);
+      setActionMessage('');
+
+      return true;
+    } catch (error) {
+      console.log('Fall simulation error:', error);
+
+      Alert.alert(
+        'Terjadi Kesalahan',
+        'Gagal mengirim simulasi jatuh ke server.'
+      );
+
+      return false;
+    } finally {
+      setSending(false);
+    }
+  };
 
   // Konfirmasi caregiver.
   const confirmFall = () => {
@@ -918,7 +934,6 @@ const markFalseAlarm = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#F2F7F7"
       />
 
       <ScrollView
