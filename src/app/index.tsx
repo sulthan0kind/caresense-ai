@@ -8,9 +8,13 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoginScreen from '../components/LoginScreen';
 
 const API_URL = 'http://192.168.1.3:5000';
 const POLLING_INTERVAL = 3000;
@@ -58,6 +62,43 @@ type HistoryResponse = {
 
 export default function HomeScreen() {
   const [tab, setTab] = useState<Tab>('home');
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [caregiverEmail, setCaregiverEmail] = useState('');
+  const [caregiverName, setCaregiverName] = useState('Caregiver Utama');
+  const saveCaregiverName = async () => {
+  try {
+    await AsyncStorage.setItem('caregiverName', caregiverName.trim());
+    Alert.alert('Berhasil', 'Nama caregiver berhasil disimpan.');
+  } catch (error) {
+    Alert.alert('Gagal', 'Nama caregiver tidak dapat disimpan.');
+  }
+};
+  const [checkingSession, setCheckingSession] = useState(true);
+
+useEffect(() => {
+  const checkLoginSession = async () => {
+    try {
+const savedEmail = await AsyncStorage.getItem('caregiverEmail');
+const savedName = await AsyncStorage.getItem('caregiverName');
+
+if (savedEmail) {
+  setCaregiverEmail(savedEmail);
+  setIsLoggedIn(true);
+}
+
+if (savedName) {
+  setCaregiverName(savedName);
+}
+    } catch (error) {
+      console.log('Gagal memeriksa sesi login:', error);
+    } finally {
+      setCheckingSession(false);
+    }
+  };
+
+  checkLoginSession();
+}, []);
 
   const [apiStatus, setApiStatus] = useState<ApiData | null>(null);
   const [apiError, setApiError] = useState('');
@@ -813,78 +854,157 @@ const markFalseAlarm = () => {
   );
 
   // Halaman laporan.
-  const renderReport = () => (
-    <>
-      <Text style={styles.pageTitle}>Laporan</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Tren Mobilitas</Text>
+  const renderReport = () => {
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-        <View style={styles.chartPlaceholder}>
-          <Text style={styles.chartLine}>╱╲_╱╲_╱</Text>
-        </View>
+    const dailyFallCounts = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (6 - index));
 
-        <Text style={styles.muted}>
-          Grafik contoh, belum menggunakan data sensor aktual.
-        </Text>
-      </View>
+      const count = history.filter((event) => {
+        const eventDate = new Date(event.timestamp);
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Riwayat Insiden</Text>
+        return (
+          event.event_type === 'fall_detected' &&
+          eventDate.toDateString() === date.toDateString()
+        );
+      }).length;
 
-        {historyLoading && (
-          <ActivityIndicator color="#0F766E" />
-        )}
+      return {
+        label: dayNames[date.getDay()],
+        count,
+      };
+    });
 
-        {history.length === 0 ? (
-          <Text style={styles.muted}>
-            Belum ada riwayat insiden.
-          </Text>
-        ) : (
-          history.map((event) => {
-            const fall = event.event_type === 'fall_detected';
+    const maxCount = Math.max(
+      ...dailyFallCounts.map((item) => item.count),
+      1
+    );
 
-            return (
-              <View key={event.id} style={styles.reportRow}>
-                <View style={styles.flexOne}>
-                  <Text style={styles.cardTitle}>
-                    {formatDateTime(event.timestamp)}
-                  </Text>
+    return (
+      <>
+        <Text style={styles.pageTitle}>Laporan</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Tren Insiden Jatuh</Text>
+
+          <View
+            style={{
+              height: 170,
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              alignItems: 'flex-end',
+              marginTop: 15,
+            }}
+          >
+            {dailyFallCounts.map((item, index) => {
+              const barHeight =
+                item.count === 0
+                  ? 4
+                  : (item.count / maxCount) * 105;
+
+              return (
+                <View
+                  key={index}
+                  style={{
+                    flex: 1,
+                    height: 160,
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                  }}
+                >
                   <Text style={styles.muted}>
-                    {event.description}
+                    {item.count}
+                  </Text>
+
+                  <View
+                    style={{
+                      width: '55%',
+                      height: barHeight,
+                      backgroundColor: '#0F766E',
+                      borderRadius: 6,
+                      marginVertical: 6,
+                    }}
+                  />
+
+                  <Text style={styles.muted}>
+                    {item.label}
                   </Text>
                 </View>
+              );
+            })}
+          </View>
 
-                <Text
-                  style={[
-                    styles.pill,
-                    fall ? styles.pillRed : styles.pillGreen,
-                  ]}
-                >
-                  {fall ? 'Jatuh' : 'Normal'}
-                </Text>
-              </View>
-            );
-          })
-        )}
+          <Text style={styles.muted}>
+            Jumlah simulasi jatuh per hari berdasarkan riwayat
+            yang tersimpan. Data sensor mobilitas aktual belum tersedia.
+          </Text>
+        </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={fetchHistory}
-          disabled={historyLoading}
-        >
-          <Text style={styles.buttonTextDark}>Perbarui Riwayat</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Riwayat Insiden</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Ringkasan AI</Text>
-        <Text style={styles.muted}>
-          Ringkasan otomatis belum tersedia karena fitur AI belum diintegrasikan.
-        </Text>
-      </View>
-    </>
-  );
+          {historyLoading && (
+            <ActivityIndicator color="#0F766E" />
+          )}
+
+          {history.length === 0 ? (
+            <Text style={styles.muted}>
+              Belum ada riwayat insiden.
+            </Text>
+          ) : (
+            history.map((event) => {
+              const fall = event.event_type === 'fall_detected';
+
+              return (
+                <View key={event.id} style={styles.reportRow}>
+                  <View style={styles.flexOne}>
+                    <Text style={styles.cardTitle}>
+                      {formatDateTime(event.timestamp)}
+                    </Text>
+
+                    <Text style={styles.muted}>
+                      {event.description}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.pill,
+                      fall ? styles.pillRed : styles.pillGreen,
+                    ]}
+                  >
+                    {fall ? 'Jatuh' : 'Normal'}
+                  </Text>
+                </View>
+              );
+            })
+          )}
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={fetchHistory}
+            disabled={historyLoading}
+          >
+            <Text style={styles.buttonTextDark}>
+              Perbarui Riwayat
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Ringkasan AI</Text>
+
+          <Text style={styles.muted}>
+            Ringkasan otomatis belum tersedia karena fitur AI belum diintegrasikan.
+          </Text>
+        </View>
+      </>
+    );
+  };
+
 
   // Halaman profil.
   const renderProfile = () => (
@@ -927,9 +1047,126 @@ const markFalseAlarm = () => {
       <Text style={styles.note}>
         Informasi kontak dan riwayat kesehatan masih berupa placeholder.
       </Text>
+            
+            <View
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          padding: 16,
+          marginTop: 16,
+          borderWidth: 1,
+          borderColor: '#DCE8E8',
+        }}
+      >
+        <Text style={styles.cardTitle}>Akun Caregiver</Text>
+        <Text style={styles.muted}>Nama caregiver</Text>
+
+      <TextInput
+        style={{
+          height: 48,
+          borderWidth: 1,
+          borderColor: '#DCE8E8',
+          borderRadius: 10,
+          paddingHorizontal: 12,
+          marginTop: 8,
+          marginBottom: 12,
+          color: '#0F2A2A',
+        }}
+        value={caregiverName}
+        onChangeText={setCaregiverName}
+        placeholder="Masukkan nama caregiver"
+      />
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#0F766E',
+          padding: 12,
+          borderRadius: 10,
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+        onPress={saveCaregiverName}
+      >
+        <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>
+          Simpan Nama
+        </Text>
+      </TouchableOpacity>
+        <Text style={styles.muted}>Email yang sedang login</Text>
+        <Text style={styles.infoValue}>{caregiverEmail}</Text>
+        
+        <View style={styles.infoRow}>
+        <Text style={styles.muted}>Status akun</Text>
+        <Text style={{ color: '#0F766E', fontWeight: '700' }}>
+          Aktif
+        </Text>
+        </View>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#DC2626',
+            padding: 14,
+            borderRadius: 10,
+            alignItems: 'center',
+            marginTop: 18,
+          }}
+          onPress={() =>
+            Alert.alert(
+              'Konfirmasi Logout',
+              'Apakah kamu yakin ingin keluar dari akun?',
+              [
+                { text: 'Batal', style: 'cancel' },
+                {
+                  text: 'Logout',
+                  style: 'destructive',
+                  onPress: async () => {
+                  try {
+                    await AsyncStorage.removeItem('caregiverEmail');
+
+                    setIsLoggedIn(false);
+                    setCaregiverEmail('');
+                    setTab('home');
+                  } catch (error) {
+                    Alert.alert('Logout Gagal', 'Sesi login tidak dapat dihapus.');
+                  }
+                },
+                },
+              ]
+            )
+          }
+        >
+          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>
+            Logout
+          </Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
+if (checkingSession) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <ActivityIndicator size="large" color="#0F766E" />
+      <Text style={{ textAlign: 'center', marginTop: 12 }}>
+        Memeriksa sesi login...
+      </Text>
+    </SafeAreaView>
+  );
+}
 
+if (!isLoggedIn) {
+  return (
+    <LoginScreen
+      onLogin={async (email) => {
+        try {
+          await AsyncStorage.setItem('caregiverEmail', email);
+          setCaregiverEmail(email);
+          setIsLoggedIn(true);
+        } catch (error) {
+          Alert.alert('Gagal Login', 'Sesi login tidak dapat disimpan.');
+        }
+      }}
+    />
+  );
+}
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -1020,7 +1257,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 30,
+    paddingBottom: 40,
     gap: 14,
   },
   loader: {
@@ -1236,7 +1473,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#DCE8E8',
     paddingTop: 7,
-    paddingBottom: 10,
+    paddingBottom: 24,
   },
   navItem: {
     flex: 1,

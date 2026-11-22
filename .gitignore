@@ -44,3 +44,8 @@ example
 
 # Local SQLite database
 backend/caresense.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
