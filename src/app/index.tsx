@@ -16,7 +16,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../components/LoginScreen';
 
-const API_URL = 'http://192.168.1.3:5000';
+const API_URL = 'http://10.214.13.15:5000';
 const POLLING_INTERVAL = 3000;
 
 type Tab = 'home' | 'alert' | 'loc' | 'rep' | 'pro';

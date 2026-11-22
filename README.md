@@ -1,3 +1,19 @@
+> [!IMPORTANT]
+> **Status Proyek: Prototype Simulasi**
+>
+> CareSense AI saat ini masih merupakan prototype untuk keperluan pembelajaran dan demonstrasi. Fitur-fitur yang tersedia sebagian besar masih menggunakan simulasi, bukan implementasi sistem pemantauan lansia yang siap digunakan dalam kondisi nyata.
+>
+> Beberapa hal yang perlu diperhatikan:
+> - Deteksi jatuh belum menggunakan AI atau sensor fisik secara langsung.
+> - Kamera, mikrofon, dan wearable belum terintegrasi dengan perangkat keras sebenarnya.
+> - Data dan aktivitas pasien yang ditampilkan digunakan untuk kebutuhan simulasi.
+> - Peringatan kejadian belum terhubung dengan layanan darurat atau sistem notifikasi nyata.
+> - Fitur lokasi belum berfungsi sebagai pelacakan GPS secara langsung.
+>
+> Aplikasi ini belum ditujukan untuk penggunaan medis, pemantauan pasien secara nyata, atau pengambilan keputusan darurat.
+>
+> Tujuan utama proyek ini adalah mendemonstrasikan konsep aplikasi mobile, komunikasi client-server melalui jaringan nirkabel, pengelolaan data, serta alur simulasi pemantauan.
+
 # CareSense AI
 
 **Aplikasi Pemantauan Lansia Berbasis Mobile dengan Simulasi Deteksi Jatuh**
@@ -354,4 +370,394 @@ Proyek masih dapat dikembangkan lebih lanjut dengan integrasi perangkat sensor f
 
 ---
 
-**CareSense AI — Supporting Safer Elderly Care Through Mobile Technology.**
+**CareSense AI — Supporting Safer Elderly Care Through Mobile Technology.**# CareSense AI
+
+**CareSense AI** adalah prototype aplikasi mobile untuk membantu caregiver memantau kondisi dan keselamatan lansia. Aplikasi ini dirancang dengan fitur pemantauan kondisi pasien, simulasi deteksi jatuh, peringatan kejadian, pengelolaan sensor, serta riwayat aktivitas.
+
+Prototype ini dikembangkan sebagai implementasi konsep Mobile & Wireless Computing dengan komunikasi antara aplikasi mobile dan backend melalui jaringan lokal.
+
+---
+
+## 1. Tujuan Proyek
+
+CareSense AI dikembangkan untuk:
+
+- Membantu caregiver memantau kondisi keselamatan lansia.
+- Menyediakan simulasi deteksi jatuh pada pasien.
+- Memberikan peringatan ketika simulasi kejadian jatuh terdeteksi.
+- Menyimpan riwayat kejadian untuk kebutuhan pemantauan.
+- Mengimplementasikan komunikasi antara aplikasi mobile dan backend melalui jaringan nirkabel.
+
+---
+
+## 2. Fitur Utama
+
+### A. Caregiver Login
+
+- Menyediakan halaman login caregiver.
+- Menyimpan sesi login menggunakan AsyncStorage.
+- Mempertahankan status login ketika aplikasi dibuka kembali.
+- Menyediakan fitur logout.
+
+### B. Caregiver Dashboard
+
+- Menampilkan informasi pasien.
+- Menampilkan status keselamatan pasien.
+- Menampilkan status koneksi backend.
+- Menampilkan kondisi sensor.
+- Memberikan akses ke fitur utama aplikasi.
+
+### C. Simulasi Deteksi Jatuh
+
+- Menyediakan tombol untuk menjalankan simulasi jatuh.
+- Mengubah status keselamatan pasien ketika simulasi diaktifkan.
+- Menyediakan fitur reset untuk mengembalikan status ke kondisi normal.
+
+### D. Fall Alert
+
+- Menampilkan peringatan ketika simulasi jatuh terdeteksi.
+- Memberikan informasi kejadian kepada caregiver.
+- Menyediakan fitur konfirmasi bahwa caregiver telah menerima peringatan.
+- Menyediakan fitur penyelesaian penanganan kejadian.
+
+### E. Incident History
+
+- Menyimpan riwayat kejadian menggunakan SQLite.
+- Mencatat kejadian simulasi jatuh dan perubahan status keselamatan.
+- Menampilkan riwayat kejadian pada halaman laporan.
+- Mempertahankan data riwayat meskipun backend dijalankan ulang.
+
+### F. Sensor Management
+
+- Menampilkan status sensor kamera, mikrofon, dan wearable.
+- Menyediakan pengaturan status sensor.
+- Mendukung status simulasi dan tidak terhubung.
+
+### G. Sensor Testing
+
+- Menyediakan fitur pengujian sensor.
+- Menampilkan hasil pengujian setiap sensor.
+- Menggunakan simulasi untuk menggambarkan proses pemeriksaan sensor.
+
+### H. Reports
+
+- Menampilkan riwayat aktivitas pasien.
+- Menampilkan tren kejadian jatuh dalam 7 hari terakhir.
+- Menyediakan visualisasi data kejadian dalam bentuk grafik.
+
+### I. Patient Profile
+
+- Menampilkan informasi pasien.
+- Menampilkan informasi caregiver.
+- Menyediakan pengaturan nama caregiver.
+- Menyediakan fitur logout.
+
+### J. Location
+
+- Menyediakan halaman lokasi sebagai bagian dari navigasi aplikasi.
+- Fitur pelacakan GPS dan pemetaan lokasi belum diimplementasikan sepenuhnya.
+
+---
+
+## 3. Teknologi yang Digunakan
+
+### Frontend
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- AsyncStorage
+
+### Backend
+- Python
+- Flask
+- SQLite
+- REST API
+
+### Komunikasi
+- HTTP
+- JSON
+- Jaringan Wi-Fi / Hotspot
+
+### Development Tools
+- Visual Studio Code
+- Node.js
+- npm
+- Python
+- Expo Go
+- Git dan GitHub
+
+---
+
+## 4. Struktur Proyek
+
+```text
+caresense-ai/
+│
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   └── caresense.db
+│
+├── src/
+│   ├── app/
+│   │   ├── index.tsx
+│   │   └── ...
+│   │
+│   ├── components/
+│   │   ├── LoginScreen.tsx
+│   │   └── ...
+│   │
+│   └── ...
+│
+├── assets/
+├── docs/
+│
+├── app.json
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+├── .gitignore
+└── README.md
+```
+
+**Catatan:** `caresense.db` merupakan database lokal yang dibuat oleh backend ketika aplikasi dijalankan. File database lokal tidak perlu diunggah ke GitHub.
+
+---
+
+## 5. REST API
+
+Backend menyediakan beberapa endpoint untuk komunikasi dengan aplikasi mobile.
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| GET | `/` | Memeriksa backend |
+| GET | `/api/status` | Mengambil status pasien |
+| GET | `/api/history` | Mengambil riwayat kejadian |
+| GET | `/api/sensors` | Mengambil status sensor |
+| POST | `/api/fall` | Menjalankan atau mereset simulasi jatuh |
+| POST | `/api/sensors` | Mengubah status sensor |
+| POST | `/api/sensors/test` | Menguji sensor |
+
+Komunikasi antara frontend dan backend menggunakan format JSON.
+
+---
+
+## 6. Persyaratan Sistem
+
+Sebelum menjalankan CareSense AI, pastikan perangkat sudah memiliki:
+
+- Windows, macOS, atau Linux.
+- Node.js dan npm.
+- Python 3.
+- Visual Studio Code.
+- Expo Go pada smartphone Android.
+- Koneksi jaringan Wi-Fi atau hotspot.
+
+Laptop dan smartphone harus terhubung ke jaringan yang sama ketika menggunakan backend lokal.
+
+---
+
+## 7. Cara Instalasi
+
+### A. Clone Repository
+
+Buka terminal dan jalankan:
+
+```bash
+git clone https://github.com/sulthan0kind/caresense-ai.git
+```
+
+Masuk ke direktori proyek:
+
+```bash
+cd caresense-ai
+```
+
+### B. Instalasi Dependensi Frontend
+
+Jalankan:
+
+```bash
+npm install
+```
+
+### C. Instalasi Dependensi Backend
+
+Jalankan:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+---
+
+## 8. Cara Menjalankan Aplikasi
+
+CareSense AI membutuhkan backend dan frontend yang berjalan secara bersamaan.
+
+### A. Menjalankan Backend
+
+Buka terminal pertama di direktori proyek.
+
+Jalankan:
+
+```bash
+python backend/app.py
+```
+
+Backend akan berjalan pada:
+
+```text
+http://localhost:5000
+```
+
+Untuk memastikan backend aktif, buka alamat tersebut melalui browser laptop.
+
+### B. Menjalankan Frontend
+
+Buka terminal kedua di direktori proyek.
+
+Jalankan:
+
+```bash
+npx expo start
+```
+
+Setelah Expo berjalan, scan QR Code menggunakan aplikasi Expo Go pada smartphone.
+
+### C. Menghubungkan Frontend dengan Backend
+
+Agar aplikasi mobile dapat berkomunikasi dengan backend Flask melalui jaringan lokal:
+
+1. Aktifkan hotspot pada smartphone.
+2. Hubungkan laptop ke hotspot tersebut.
+3. Buka PowerShell pada laptop.
+4. Jalankan perintah:
+
+```bash
+ipconfig
+```
+
+5. Cari bagian Wireless LAN adapter Wi-Fi.
+6. Catat alamat IPv4 laptop.
+7. Buka file `src/app/index.tsx`.
+8. Cari konfigurasi `API_URL`.
+9. Sesuaikan alamat IP dengan alamat IPv4 laptop.
+
+Contoh:
+
+```tsx
+const API_URL = 'http://192.168.43.100:5000';
+```
+
+Ganti alamat IP contoh tersebut dengan alamat IPv4 laptop yang sedang digunakan.
+
+**Hal yang perlu diperhatikan:**
+
+- Smartphone dan laptop harus terhubung ke jaringan yang sama.
+- Backend Flask harus tetap berjalan selama aplikasi digunakan.
+- Frontend Expo juga harus tetap berjalan.
+- Alamat IPv4 dapat berubah ketika berpindah jaringan atau mengaktifkan hotspot yang berbeda.
+- Jangan menggunakan `localhost` atau `127.0.0.1` sebagai alamat backend pada smartphone karena alamat tersebut mengarah ke perangkat smartphone itu sendiri.
+
+---
+
+## 9. Cara Menggunakan Aplikasi
+
+1. Jalankan backend Flask pada laptop.
+2. Jalankan frontend Expo.
+3. Buka CareSense AI melalui Expo Go.
+4. Masuk menggunakan akun demo caregiver jika diperlukan.
+5. Periksa status koneksi backend pada dashboard.
+6. Jalankan simulasi deteksi jatuh.
+7. Perhatikan peringatan yang muncul pada aplikasi.
+8. Lakukan konfirmasi penerimaan peringatan oleh caregiver.
+9. Selesaikan penanganan simulasi.
+10. Buka halaman laporan untuk melihat riwayat kejadian.
+
+**Catatan:** Akun login pada prototype ini merupakan autentikasi demo lokal, bukan sistem autentikasi produksi.
+
+---
+
+## 10. Pengujian Sistem
+
+Pengujian dilakukan untuk memastikan fitur utama aplikasi berjalan dengan baik.
+
+Beberapa pengujian yang telah dilakukan:
+
+- Pengujian login dan logout caregiver.
+- Pengujian penyimpanan sesi login.
+- Pengujian koneksi frontend dengan backend.
+- Pengujian simulasi deteksi jatuh.
+- Pengujian tampilan peringatan jatuh.
+- Pengujian konfirmasi caregiver.
+- Pengujian penyelesaian penanganan kejadian.
+- Pengujian penyimpanan riwayat kejadian pada SQLite.
+- Pengujian pengelolaan status sensor.
+- Pengujian simulasi sensor.
+- Pengujian komunikasi aplikasi melalui jaringan hotspot smartphone.
+
+---
+
+## 11. Build Android APK (Opsional)
+
+Untuk membuat file APK menggunakan Expo Application Services (EAS):
+
+Instalasi dan login:
+
+```bash
+npx eas-cli@latest login
+```
+
+Kemudian jalankan:
+
+```bash
+npx eas-cli@latest build --platform android --profile preview
+```
+
+Ikuti petunjuk yang diberikan oleh EAS Build sampai proses selesai.
+
+**Catatan:** Build APK merupakan proses terpisah dari menjalankan aplikasi melalui Expo Go. Pastikan konfigurasi aplikasi sudah sesuai sebelum melakukan build.
+
+---
+
+## 12. Batasan Prototype
+
+CareSense AI saat ini masih berupa prototype dengan beberapa batasan:
+
+- Deteksi jatuh masih menggunakan simulasi, belum menggunakan algoritma AI secara nyata.
+- Kamera dan mikrofon belum melakukan pemrosesan data secara langsung.
+- Wearable belum terhubung dengan perangkat fisik.
+- Pengelolaan sensor masih menggunakan data simulasi.
+- Pelacakan lokasi GPS dan peta belum diimplementasikan sepenuhnya.
+- Notifikasi darurat otomatis belum tersedia.
+- Autentikasi caregiver masih berupa autentikasi demo lokal.
+
+Fitur-fitur tersebut dapat dikembangkan lebih lanjut pada tahap pengembangan berikutnya.
+
+---
+
+## 13. Status Pengembangan
+
+**Project:** CareSense AI  
+**Platform:** Mobile Application  
+**Development Status:** Prototype  
+**Frontend:** React Native + Expo  
+**Backend:** Python + Flask  
+**Database:** SQLite  
+**Communication:** REST API melalui jaringan lokal
+
+Prototype telah memiliki fitur utama untuk simulasi pemantauan pasien lansia dan telah diuji melalui koneksi jaringan lokal menggunakan hotspot smartphone.
+
+---
+
+## 14. Repository
+
+GitHub Repository:
+
+https://github.com/sulthan0kind/caresense-ai.git
+
+---
+
+**CareSense AI — Supporting Safer and Smarter Elderly Care.**
